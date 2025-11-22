@@ -3,7 +3,7 @@ const mongoose = require("mongoose");
 const RoleSchema = new mongoose.Schema({
   name: {
     type: String,
-    enum: ["admin", "user"],    // giống ENUM trong SQL
+    enum: ["admin", "user"],    
     required: true,
     unique: true
   }
