@@ -85,31 +85,6 @@ const getTrendingEvents = async (req, res) => {
   }
 };
 
-// GET /api/events/:id - Lấy chi tiết 1 sự kiện
-/*const getEventById = async (req, res) => {
-  try {
-    const { id } = req.params;
-
-    if (!mongoose.Types.ObjectId.isValid(id)) {
-      return res.status(400).json({ success: false, message: 'ID không hợp lệ' });
-    }
-
-    const event = await Event.findById(id).lean();
-
-    if (!event) {
-      return res.status(404).json({ success: false, message: 'Không tìm thấy sự kiện' });
-    }
-
-    res.json({
-      success: true,
-      data: event
-    });
-  } catch (error) {
-    console.error('Error in getEventById:', error);
-    res.status(500).json({ success: false, message: 'Lỗi server' });
-  }
-};
-*/
 
 // Get event by ID
 const getEventById = async (req, res) => {

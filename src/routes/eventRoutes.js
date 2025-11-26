@@ -7,7 +7,9 @@ const {
   updateEvent, 
   deleteEvent,
   likeEvent,
-  saveEvent
+  saveEvent,
+  checkIfUserLiked,
+  toggleLikeEvent
 } = require('../controllers/eventController');
 const auth = require('../middleware/authMiddleware'); // Middleware xác thực JWT
 
@@ -19,9 +21,9 @@ router.get('/trending', getTrendingEvents);       // Lấy events nổi bật
 router.get('/:eventId', getEventById);            // Lấy chi tiết event theo ID
 
 // Check if user liked the event (protected route)
-router.get('/:eventId/check-like', authenticate, checkIfUserLiked);
+router.get('/:eventId/check-like', auth, checkIfUserLiked);
 // Toggle like/unlike event (protected route)
-router.post('/:eventId/toggle-like', authenticate, toggleLikeEvent);
+router.post('/:eventId/toggle-like', auth, toggleLikeEvent);
 
 // Private Routes (cần auth), dành cho admin
 router.post('/', auth, createEvent);              // Tạo event mới
