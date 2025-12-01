@@ -25,3 +25,6 @@ const eventSchema = new mongoose.Schema({
 });
 
 module.exports = mongoose.model('Event', eventSchema);
+
+
+//thêm để thử add . git
