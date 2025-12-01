@@ -4,12 +4,11 @@ const Event = require('../models/Event');
 const User = require('../models/User');
 const mongoose = require('mongoose');
 
-/*
 // GET /api/events - Lấy danh sách sự kiện + phân trang + tìm kiếm + lọc category
 const getAllEvents = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 12;
+    const limit = parseInt(req.query.limit) || 9;
     const skip = (page - 1) * limit;
 
     const { search, category } = req.query;
@@ -19,11 +18,11 @@ const getAllEvents = async (req, res) => {
 
     // Tìm theo từ khóa trong title, location, ogranization (không phân biệt hoa thường)
     if (search && search.trim() !== '') {
-      const regex = new RegExp(search.trim().slipt(/\s+/), 'i'); // không phân biệt hoa thường
+      const regex = new RegExp(search.trim(), 'i'); // không phân biệt hoa thường
       query.$or = [
-        { title: regex },
-        { location: regex },
-        { organization: regex }
+        { title: { $regex: regex } },
+        { location: { $regex: regex } },
+        { organization: { $regex: regex } }
       ];
     }
 
@@ -63,77 +62,6 @@ const getAllEvents = async (req, res) => {
     });
   }
 };
-*/
-
-const getAllEvents = async (req, res) => {
-  try {
-    const page = parseInt(req.query.page) || 1;
-    const limit = parseInt(req.query.limit) || 6;
-    const skip = (page - 1) * limit;
-
-    const { search, category } = req.query;
-
-    let query = {};
-
-    if (category && category !== 'all') {
-      query.category = category;
-    }
-
-    // Lấy tất cả event thỏa query category (và search tạm thời)
-    let events = await Event.find(query)
-      .sort({ startDate: -1, createdAt: -1 })
-      .select('-__v')
-      .lean();
-
-    if (search && search.trim() !== '') {
-      const keywords = search.trim().toLowerCase().split(/\s+/);
-
-      // Tính matchCount cho từng event
-      events = events
-        .map(event => {
-          let matchCount = 0;
-          keywords.forEach(kw => {
-            if (
-              (event.title && event.title.toLowerCase().includes(kw)) ||
-              (event.location && event.location.toLowerCase().includes(kw)) ||
-              (event.organization && event.organization.toLowerCase().includes(kw))
-            ) {
-              matchCount += 1;
-            }
-          });
-          return { ...event, matchCount };
-        })
-        // Lọc event match ít nhất 1 từ khóa
-        .filter(event => event.matchCount > 0)
-        // Sort theo matchCount giảm dần
-        .sort((a, b) => b.matchCount - a.matchCount);
-    }
-
-    const totalEvents = events.length;
-    const totalPages = Math.ceil(totalEvents / limit);
-
-    // Phân trang thủ công
-    const pagedEvents = events.slice(skip, skip + limit);
-
-    res.json({
-      success: true,
-      data: pagedEvents,
-      pagination: {
-        page,
-        pages: totalPages,
-        total: totalEvents,
-        limit
-      }
-    });
-  } catch (error) {
-    console.error('Error in getAllEvents:', error);
-    res.status(500).json({
-      success: false,
-      message: 'Lỗi server khi lấy danh sách sự kiện'
-    });
-  }
-};
-
 
 // GET /api/events/trending - Lấy sự kiện nổi bật (dựa trên interestingCount + saveCount)
 const getTrendingEvents = async (req, res) => {
