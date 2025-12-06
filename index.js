@@ -1,19 +1,38 @@
-const express = require('express');
-const mongoose = require('mongoose');
-const cors = require('cors');
 const dotenv = require('dotenv');
 const fs = require('fs');
 const path = require('path');
+
+require('dotenv').config({
+  path: path.join(__dirname, 'src', '.env'), // Luôn load src/.env
+  override: true
+});
+
+const express = require('express');
+const mongoose = require('mongoose');
+const cors = require('cors');
+
+// Import routes
 const authRoutes = require('./src/routes/authRoutes');
 const eventRoutes = require('./src/routes/eventRoutes');
+const categoryRoutes = require('./src/routes/categoryRoutes');
+const reminderRoutes = require('./src/routes/reminderRoutes');
+const savedEventRoutes = require('./src/routes/savedEventRoutes');
+//send reminder
+const {startReminderScheduler} = require('./src/service/reminderSchedual');
 
-// Load environment variables
-dotenv.config();
+// Load environment variables; prefer `src/.env` when present
+
 const altEnv = path.join(__dirname, 'src', '.env');
 if (fs.existsSync(altEnv)) {
   dotenv.config({ path: altEnv, override: true });
   console.log(`[dotenv] loaded env from ${altEnv}`);
 }
+
+// Debug - Kiểm tra email config (after loading env files)
+console.log('\n=== EMAIL CONFIG ===');
+console.log('EMAIL_USER:', process.env.EMAIL_USER);
+console.log('EMAIL_PASSWORD exists:', !!process.env.EMAIL_PASSWORD);
+console.log('===================\n');
 
 const app = express();
 
@@ -46,6 +65,7 @@ app.use(cors({
 // Middleware
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
+console.log("Middleware oke");
 
 
 // MongoDB Connection
@@ -64,24 +84,40 @@ mongoose.connect(mongoUri)
     process.exit(1);
   });
 
-// Authentication Routes
-app.use('/api/auth', require('./src/routes/authRoutes'));
-//Fetch all revent routes
-app.use('/api/events', eventRoutes);
-console.log("Router event oke");
-
-// Routes
+  // Routes
 app.use(express.json());
 app.use(express.urlencoded({ extended: true }));
-
-
-//Fetch all revent routes
-app.use('/api/events', eventRoutes);
+console.log("express oke");
 
 // Basic Route
 app.get('/', (req, res) => {
   res.json({ message: 'API Server đang chạy' });
 });
+console.log("Basic route oke");
+
+// Authentication Routes
+app.use('/api/auth', authRoutes);
+console.log("Router auth oke");
+
+//Fetch all revent routes
+app.use('/api/events', eventRoutes);
+console.log("Router event oke");
+
+//Fetch all revent routes
+app.use('/api/events', eventRoutes);
+
+// Category Routes
+app.use('/api', categoryRoutes);
+console.log("Router category oke");
+
+// Reminder Routes
+app.use('/api/reminders', reminderRoutes);
+console.log("Router reminder oke");
+
+// Saved Event Routes
+app.use('/api/saved-events', savedEventRoutes);
+console.log("Router saved-events oke");
+
 
 // Error handling middleware
 app.use((err, req, res, next) => {
@@ -91,6 +127,9 @@ app.use((err, req, res, next) => {
     message: err.message || 'Lỗi server'
   });
 });
+
+// Start reminder scheduler
+startReminderScheduler();
 
 // 404 handler - include requested path for easier debugging
 app.use((req, res) => {
