@@ -73,7 +73,7 @@ const getAllEvents = async (req, res) => {
 
 const getTrendingEvents = async (req, res) => {
   try {
-    const limit = parseInt(req.query.limit) || 3;
+    const limit = parseInt(req.query.limit) || 4;
 
     const trendingEvents = await Event.find()
       .sort({

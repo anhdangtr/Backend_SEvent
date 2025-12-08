@@ -18,6 +18,7 @@ const categoryRoutes = require('./src/routes/categoryRoutes');
 const reminderRoutes = require('./src/routes/reminderRoutes');
 const savedEventRoutes = require('./src/routes/savedEventRoutes');
 const getProfileRoutes = require('./src/routes/getProfileRoutes');
+const userRoutes = require('./src/routes/userRoutes');
 //send reminder
 const {startReminderScheduler} = require('./src/service/reminderSchedual');
 
@@ -115,6 +116,10 @@ console.log("Router saved-events oke");
 //get profile route
 app.use('/api/info', getProfileRoutes);
 console.log("Router get profile oke");
+
+// User Routes
+app.use('/api/user', userRoutes);
+console.log("Router user oke");
 
 // Error handling middleware
 app.use((err, req, res, next) => {
