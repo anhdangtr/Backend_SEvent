@@ -2,7 +2,7 @@ const cron = require('node-cron');
 const Reminder = require('../models/Reminder');
 const User = require('../models/User');
 const Event = require('../models/Event');
-const { sendReminderEmail } = require('./emailService');
+const { sendReminderEmail } = require('../service/emailService');
 
 // Hàm kiểm tra và gửi reminders
 const checkAndSendReminders = async () => {
@@ -34,7 +34,8 @@ const checkAndSendReminders = async () => {
         const success = await sendReminderEmail(
           reminder.user.email,
           reminder.user.name,
-          reminder.event,
+          reminder.event, // Full event object
+          reminder.note || '', // Thêm note parameter
           reminder.reminderTime
         );
 

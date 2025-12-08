@@ -23,11 +23,11 @@ const startReminderScheduler = () => {
           const user = reminder.userId;
           const event = reminder.eventId;
 
-          // Gửi email
+          // Gửi email với đầy đủ thông tin event
           const emailSent = await sendReminderEmail(
             user.email,
             user.name,
-            event.title,
+            event, // Truyền full event object thay vì chỉ event.title
             reminder.note,
             reminder.reminderDateTime
           );

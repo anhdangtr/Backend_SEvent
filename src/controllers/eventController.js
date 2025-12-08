@@ -10,10 +10,7 @@ const isValidObjectId = (id) => {
   return id.match(/^[0-9a-fA-F]{24}$/);
 };
 
-// =========================================================
 //  1. FETCH EVENT API — GET LIST, SEARCH, FILTER, TRENDING
-// =========================================================
-
 const getAllEvents = async (req, res) => {
   try {
     const page = parseInt(req.query.page) || 1;
@@ -132,10 +129,7 @@ const getEventById = async (req, res) => {
   }
 };
 
-// =========================================================
-//  2. CRUD EVENT — CREATE / UPDATE / DELETE
-// =========================================================
-
+//  2. CRUD EVENT — CREATE / UPDATE / DELETE - Dành cho admin
 const createEvent = async (req, res) => {
   try {
     const payload = req.body;
@@ -187,10 +181,7 @@ const deleteEvent = async (req, res) => {
   }
 };
 
-// =========================================================
 //  CHECK LIKE & SAVE STATUS
-// =========================================================
-
 const checkIfUserLiked = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -263,10 +254,7 @@ const checkIfUserSaved = async (req, res) => {
   }
 };
 
-// =========================================================
 //  TOGGLE LIKE
-// =========================================================
-
 const toggleLikeEvent = async (req, res) => {
   try {
     const { eventId } = req.params;
@@ -329,10 +317,7 @@ const toggleLikeEvent = async (req, res) => {
   }
 };
 
-// =========================================================
 //  TOGGLE SAVE
-// =========================================================
-
 const toggleSaveEvent = async (req, res) => {
   try {
     const userId = req.user._id;
@@ -420,10 +405,7 @@ const toggleSaveEvent = async (req, res) => {
   }
 };
 
-// =========================================================
 // EXPORT
-// =========================================================
-
 module.exports = {
   getAllEvents,
   getEventById,
