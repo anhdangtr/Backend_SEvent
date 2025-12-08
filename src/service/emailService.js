@@ -1,5 +1,3 @@
-const transporter = require('../config/email');
-
 const brevo = require("@getbrevo/brevo");
 
 const sendReminderEmail = async (userEmail, userName, eventData, note) => {
@@ -10,6 +8,9 @@ const sendReminderEmail = async (userEmail, userName, eventData, note) => {
     return false;
   }
 
+  // Initialize Brevo API
+  const apiInstance = new brevo.TransactionalEmailsApi();
+  apiInstance.setApiKey(brevo.TransactionalEmailsApiApiKeys.apiKey, process.env.BREVO_API_KEY);
 
   // Extract event details
   const eventTitle = typeof eventData === 'string' ? eventData : eventData.title;
@@ -25,11 +26,7 @@ const sendReminderEmail = async (userEmail, userName, eventData, note) => {
   const eventId = eventData._id || eventData.id || '';
   const eventLink = eventId ? `${process.env.FRONTEND_URL || 'http://localhost:5174'}/events/${eventId}` : '#';
 
-  const mailOptions = {
-    from: process.env.EMAIL_USER,
-    to: userEmail,
-    subject: `Sevent reminds you about: ${eventTitle}`,
-    html: `
+  const htmlContent = `
       <div style="font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; max-width: 650px; margin: 0 auto; background: #f5f5f5;">
         <!-- Header: Purple Sevent Reminder -->
         <div style="background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); padding: 30px 20px; text-align: center; border-radius: 10px 10px 0 0;">
@@ -98,13 +95,21 @@ const sendReminderEmail = async (userEmail, userName, eventData, note) => {
           <p style="margin: 5px 0;">Never miss an important event again! 🎉</p>
         </div>
       </div>
-    `
+    `;
+
+  const sendSmtpEmail = new brevo.SendSmtpEmail();
+  sendSmtpEmail.subject = `Sevent reminds you about: ${eventTitle}`;
+  sendSmtpEmail.htmlContent = htmlContent;
+  sendSmtpEmail.sender = { 
+    name: "Sevent Reminder", 
+    email: process.env.BREVO_SENDER_EMAIL || "noreply@sevent.com" 
   };
+  sendSmtpEmail.to = [{ email: userEmail, name: userName }];
 
   try {
-    console.log(`[Email] Sending email to ${userEmail}...`);
-    await transporter.sendMail(mailOptions);
-    console.log(`[Email] ✓ Email sent successfully to ${userEmail}`);
+    console.log(`[Email] Sending email via Brevo to ${userEmail}...`);
+    const result = await apiInstance.sendTransacEmail(sendSmtpEmail);
+    console.log(`[Email] ✓ Email sent successfully to ${userEmail}. Message ID: ${result.messageId}`);
     return true;
   } catch (error) {
     console.error(`[Email] ✗ Error sending email to ${userEmail}:`, error.message);
