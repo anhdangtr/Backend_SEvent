@@ -10,10 +10,20 @@ router.get('/check-reminders', async (req, res) => {
   try {
     // Bảo mật: chỉ cho phép request từ cron service
     const cronSecret = req.headers['x-cron-secret'] || req.query.secret;
+    
+    // Debug logging
+    console.log('[Cron] Received secret:', cronSecret);
+    console.log('[Cron] Expected secret:', process.env.CRON_SECRET);
+    console.log('[Cron] Match:', cronSecret === process.env.CRON_SECRET);
+    
     if (cronSecret !== process.env.CRON_SECRET) {
       return res.status(401).json({ 
         success: false, 
-        message: 'Unauthorized' 
+        message: 'Unauthorized',
+        debug: {
+          receivedSecret: cronSecret ? 'provided' : 'missing',
+          expectedSecret: process.env.CRON_SECRET ? 'configured' : 'not configured'
+        }
       });
     }
 
