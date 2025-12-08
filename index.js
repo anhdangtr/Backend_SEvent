@@ -50,8 +50,7 @@ const allowedOrigins = [
   'http://localhost:3000',
   'http://localhost:5173',
   'http://localhost:5174',
-  'https://sevent.onrender.com',
-  'https://sevent-chi.vercel.app'
+  'https://seventwebsite.vercel.app'
 ];
 
 // Middleware CORS duy nhất
