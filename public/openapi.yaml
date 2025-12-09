@@ -1,0 +1,1650 @@
+openapi: 3.0.0
+info:
+  title: SEvent API
+  description: |
+    API documentation cho ứng dụng quản lý sự kiện SEvent.
+    
+    ## Authentication
+    Hầu hết các endpoints yêu cầu JWT token trong header:
+    ```
+    Authorization: Bearer <your_jwt_token>
+    ```
+    
+    ## Base URL
+    - Production: `https://be-sevent.vercel.app/api` (Cập nhật URL sau khi deploy)
+    - Development: `http://localhost:5000/api`
+    
+    ## Tính năng chính
+    - 🔐 Authentication (JWT)
+    - 📅 Quản lý Events (CRUD, Like, Save)
+    - ⏰ Reminder System với Email Notification
+    - 📁 Folder Management cho Saved Events
+    - 👥 User Management (Admin)
+    - 🏷️ Category System
+  version: 1.0.0
+  contact:
+    name: SEvent Development Team
+    email: seventwebsite@gmail.com
+    url: https://github.com/anhdangtr/BE_SEvent
+
+servers:
+  - url: https://be-sevent.vercel.app/api
+    description: Production server (Cập nhật URL của bạn sau khi deploy Backend)
+  - url: http://localhost:5000/api
+    description: Development server
+
+tags:
+  - name: Authentication
+    description: Đăng ký, đăng nhập người dùng
+  - name: Events
+    description: Quản lý sự kiện (CRUD, like, save, trending)
+  - name: Reminders
+    description: Quản lý nhắc nhở cho sự kiện
+  - name: Saved Events
+    description: Quản lý sự kiện đã lưu và folders
+  - name: Users
+    description: Quản lý người dùng và roles (admin)
+  - name: Categories
+    description: Quản lý danh mục sự kiện
+  - name: User Profile
+    description: Xem thông tin profile người dùng
+  - name: Cron Jobs
+    description: Endpoints cho external cron service
+
+components:
+  securitySchemes:
+    BearerAuth:
+      type: http
+      scheme: bearer
+      bearerFormat: JWT
+      description: JWT token từ endpoint login/signup
+
+  schemas:
+    User:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        email:
+          type: string
+          format: email
+          example: "user@example.com"
+        name:
+          type: string
+          example: "Nguyễn Văn A"
+        role:
+          type: string
+          enum: [user, admin]
+          default: user
+        savedFolders:
+          type: array
+          items:
+            $ref: '#/components/schemas/Folder'
+        interestingEvents:
+          type: array
+          items:
+            $ref: '#/components/schemas/InterestingEvent'
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Event:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        title:
+          type: string
+          example: "Hội thảo AI 2024"
+        content:
+          type: string
+          example: "Nội dung chi tiết về sự kiện"
+        shortDescription:
+          type: string
+          example: "Mô tả ngắn gọn"
+        bannerUrl:
+          type: string
+          example: "https://example.com/banner.jpg"
+        registrationFormUrl:
+          type: string
+          example: "https://forms.google.com/..."
+        formSubmissionDeadline:
+          type: string
+          format: date-time
+        publishDate:
+          type: string
+          format: date-time
+        startDate:
+          type: string
+          format: date-time
+        endDate:
+          type: string
+          format: date-time
+        location:
+          type: string
+          example: "TP.HCM"
+        category:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        organization:
+          type: string
+          example: "UIT"
+        createdBy:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        interestingCount:
+          type: number
+          default: 0
+        saveCount:
+          type: number
+          default: 0
+        interestingEvents:
+          type: array
+          items:
+            type: string
+        savedBy:
+          type: array
+          items:
+            type: string
+        createdAt:
+          type: string
+          format: date-time
+        updatedAt:
+          type: string
+          format: date-time
+
+    Reminder:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        userId:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        eventId:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        reminderDateTime:
+          type: string
+          format: date-time
+        note:
+          type: string
+          example: "Nhớ mang theo laptop"
+        isSent:
+          type: boolean
+          default: false
+        createdAt:
+          type: string
+          format: date-time
+
+    Category:
+      type: object
+      properties:
+        _id:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        name:
+          type: string
+          example: "Công nghệ"
+        createdAt:
+          type: string
+          format: date-time
+
+    Folder:
+      type: object
+      properties:
+        name:
+          type: string
+          example: "Watch later"
+        createdAt:
+          type: string
+          format: date-time
+        events:
+          type: array
+          items:
+            $ref: '#/components/schemas/SavedEvent'
+
+    SavedEvent:
+      type: object
+      properties:
+        event:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        savedAt:
+          type: string
+          format: date-time
+
+    InterestingEvent:
+      type: object
+      properties:
+        event:
+          type: string
+          example: "507f1f77bcf86cd799439011"
+        likedAt:
+          type: string
+          format: date-time
+
+    Error:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: false
+        message:
+          type: string
+          example: "Error message"
+
+    SuccessResponse:
+      type: object
+      properties:
+        success:
+          type: boolean
+          example: true
+        message:
+          type: string
+          example: "Operation successful"
+        data:
+          type: object
+
+paths:
+  # ==================== AUTHENTICATION ====================
+  /auth/signup:
+    post:
+      tags:
+        - Authentication
+      summary: Đăng ký người dùng mới
+      description: Tạo tài khoản người dùng mới với email, password và name
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+                - name
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "newuser@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "SecurePass123"
+                passwordConfirm:
+                  type: string
+                  format: password
+                  example: "SecurePass123"
+                name:
+                  type: string
+                  example: "Nguyễn Văn A"
+      responses:
+        '201':
+          description: Đăng ký thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Đăng ký thành công"
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      email:
+                        type: string
+                      name:
+                        type: string
+                      role_id:
+                        type: string
+                      created_at:
+                        type: string
+                        format: date-time
+        '400':
+          description: Email đã được sử dụng
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Lỗi server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /auth/login:
+    post:
+      tags:
+        - Authentication
+      summary: Đăng nhập
+      description: Đăng nhập với email và password để nhận JWT token
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - email
+                - password
+              properties:
+                email:
+                  type: string
+                  format: email
+                  example: "user@example.com"
+                password:
+                  type: string
+                  format: password
+                  example: "SecurePass123"
+      responses:
+        '200':
+          description: Đăng nhập thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Đăng nhập thành công"
+                  token:
+                    type: string
+                    example: "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9..."
+                  user:
+                    type: object
+                    properties:
+                      id:
+                        type: string
+                      email:
+                        type: string
+                      name:
+                        type: string
+                      role:
+                        type: string
+        '400':
+          description: Thiếu thông tin đăng nhập
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '401':
+          description: Email hoặc mật khẩu không chính xác
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+        '500':
+          description: Lỗi server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  # ==================== EVENTS ====================
+  /events:
+    get:
+      tags:
+        - Events
+      summary: Lấy danh sách tất cả events
+      description: |
+        Lấy danh sách events với pagination, search và filter theo category.
+        **Public endpoint** - không cần authentication
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Số trang
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 9
+          description: Số lượng events mỗi trang
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Tìm kiếm theo title, location hoặc organization
+        - in: query
+          name: category
+          schema:
+            type: string
+          description: Filter theo category ID (hoặc 'all' để lấy tất cả)
+      responses:
+        '200':
+          description: Danh sách events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+                  pagination:
+                    type: object
+                    properties:
+                      page:
+                        type: integer
+                        example: 1
+                      pages:
+                        type: integer
+                        example: 5
+                      total:
+                        type: integer
+                        example: 45
+                      limit:
+                        type: integer
+                        example: 9
+        '500':
+          description: Lỗi server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+    post:
+      tags:
+        - Events
+      summary: Tạo event mới (Admin)
+      description: Tạo một sự kiện mới - yêu cầu authentication và quyền admin
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - title
+                - createdBy
+              properties:
+                title:
+                  type: string
+                  example: "Hội thảo AI 2024"
+                content:
+                  type: string
+                shortDescription:
+                  type: string
+                bannerUrl:
+                  type: string
+                registrationFormUrl:
+                  type: string
+                formSubmissionDeadline:
+                  type: string
+                  format: date-time
+                publishDate:
+                  type: string
+                  format: date-time
+                startDate:
+                  type: string
+                  format: date-time
+                endDate:
+                  type: string
+                  format: date-time
+                location:
+                  type: string
+                category:
+                  type: string
+                  description: Category ObjectId
+                organization:
+                  type: string
+                createdBy:
+                  type: string
+                  description: User ObjectId
+      responses:
+        '201':
+          description: Event được tạo thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Event'
+        '401':
+          description: Unauthorized - cần đăng nhập
+        '500':
+          description: Lỗi server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /events/trending:
+    get:
+      tags:
+        - Events
+      summary: Lấy events nổi bật
+      description: |
+        Lấy danh sách events trending dựa trên lượt like, save và mới nhất.
+        **Public endpoint** - không cần authentication
+      parameters:
+        - in: query
+          name: limit
+          schema:
+            type: integer
+            default: 4
+          description: Số lượng events cần lấy
+      responses:
+        '200':
+          description: Danh sách trending events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Event'
+        '500':
+          description: Lỗi server
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /events/{eventId}:
+    get:
+      tags:
+        - Events
+      summary: Lấy chi tiết event theo ID
+      description: Lấy thông tin chi tiết của một event - yêu cầu authentication
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: string
+          description: Event ObjectId
+      responses:
+        '200':
+          description: Chi tiết event
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Event'
+        '400':
+          description: Invalid event ID format
+        '404':
+          description: Event not found
+        '401':
+          description: Unauthorized - cần đăng nhập
+        '500':
+          description: Lỗi server
+
+    put:
+      tags:
+        - Events
+      summary: Cập nhật event (Admin)
+      description: Cập nhật thông tin event - yêu cầu authentication và quyền admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: string
+          description: Event ObjectId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                title:
+                  type: string
+                content:
+                  type: string
+                shortDescription:
+                  type: string
+                bannerUrl:
+                  type: string
+                registrationFormUrl:
+                  type: string
+                formSubmissionDeadline:
+                  type: string
+                  format: date-time
+                publishDate:
+                  type: string
+                  format: date-time
+                startDate:
+                  type: string
+                  format: date-time
+                endDate:
+                  type: string
+                  format: date-time
+                location:
+                  type: string
+                category:
+                  type: string
+                organization:
+                  type: string
+      responses:
+        '200':
+          description: Event được cập nhật thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Event'
+        '400':
+          description: Invalid event ID format
+        '401':
+          description: Unauthorized
+        '404':
+          description: Event not found
+        '500':
+          description: Lỗi server
+
+    delete:
+      tags:
+        - Events
+      summary: Xóa event (Admin)
+      description: Xóa một event - yêu cầu authentication và quyền admin
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: string
+          description: Event ObjectId
+      responses:
+        '200':
+          description: Event được xóa thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Event deleted successfully"
+        '400':
+          description: Invalid event ID format
+        '401':
+          description: Unauthorized
+        '404':
+          description: Event not found
+        '500':
+          description: Lỗi server
+
+  /events/{eventId}/check-liked:
+    get:
+      tags:
+        - Events
+      summary: Kiểm tra user đã like event chưa
+      description: Kiểm tra xem user hiện tại đã like event này chưa
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: string
+          description: Event ObjectId
+      responses:
+        '200':
+          description: Trạng thái liked
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  isLiked:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+        '500':
+          description: Lỗi server
+
+  /events/{eventId}/check-saved:
+    get:
+      tags:
+        - Events
+      summary: Kiểm tra user đã save event chưa
+      description: Kiểm tra xem user hiện tại đã save event này chưa
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: string
+          description: Event ObjectId
+      responses:
+        '200':
+          description: Trạng thái saved
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  isSaved:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+        '500':
+          description: Lỗi server
+
+  /events/{eventId}/toggle-like:
+    post:
+      tags:
+        - Events
+      summary: Toggle like/unlike event
+      description: Like hoặc unlike một event (tùy theo trạng thái hiện tại)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: string
+          description: Event ObjectId
+      responses:
+        '200':
+          description: Toggle thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Event liked/unliked"
+                  isLiked:
+                    type: boolean
+                  interestingCount:
+                    type: number
+        '401':
+          description: Unauthorized
+        '404':
+          description: Event not found
+        '500':
+          description: Lỗi server
+
+  /events/{eventId}/toggle-save:
+    post:
+      tags:
+        - Events
+      summary: Toggle save/unsave event
+      description: Save hoặc unsave một event (tùy theo trạng thái hiện tại)
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: string
+          description: Event ObjectId
+      responses:
+        '200':
+          description: Toggle thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Event saved/unsaved"
+                  isSaved:
+                    type: boolean
+                  saveCount:
+                    type: number
+        '401':
+          description: Unauthorized
+        '404':
+          description: Event not found
+        '500':
+          description: Lỗi server
+
+  # ==================== REMINDERS ====================
+  /reminders:
+    post:
+      tags:
+        - Reminders
+      summary: Tạo reminder mới
+      description: |
+        Tạo một reminder mới cho event. 
+        - Giới hạn tối đa 3 reminders cho mỗi event
+        - Không được trùng thời gian reminder cho cùng 1 event
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - eventId
+                - reminderDateTime
+              properties:
+                eventId:
+                  type: string
+                  example: "507f1f77bcf86cd799439011"
+                reminderDateTime:
+                  type: string
+                  format: date-time
+                  example: "2024-12-15T09:00:00.000Z"
+                note:
+                  type: string
+                  example: "Nhớ mang theo laptop"
+      responses:
+        '201':
+          description: Reminder được tạo thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Reminder'
+                  message:
+                    type: string
+                    example: "Reminder created successfully"
+        '400':
+          description: |
+            - Event ID is required
+            - Chỉ được đặt tối đa 3 reminder cho một sự kiện
+            - Thời gian reminder này đã tồn tại
+        '401':
+          description: Unauthorized
+        '404':
+          description: Event not found
+        '500':
+          description: Lỗi server
+
+  /reminders/{eventId}:
+    get:
+      tags:
+        - Reminders
+      summary: Lấy danh sách reminders cho event
+      description: Lấy tất cả reminders của user hiện tại cho một event cụ thể
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: string
+          description: Event ObjectId
+      responses:
+        '200':
+          description: Danh sách reminders
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Reminder'
+        '401':
+          description: Unauthorized
+        '500':
+          description: Lỗi server
+
+  /reminders/{reminderId}:
+    put:
+      tags:
+        - Reminders
+      summary: Cập nhật reminder
+      description: |
+        Cập nhật thông tin reminder.
+        - Chỉ owner mới có thể cập nhật
+        - Không được trùng thời gian với reminders khác của cùng event
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: reminderId
+          required: true
+          schema:
+            type: string
+          description: Reminder ObjectId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              properties:
+                reminderDateTime:
+                  type: string
+                  format: date-time
+                note:
+                  type: string
+      responses:
+        '200':
+          description: Reminder được cập nhật thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    $ref: '#/components/schemas/Reminder'
+                  message:
+                    type: string
+                    example: "Reminder updated successfully"
+        '400':
+          description: Thời gian reminder này đã tồn tại
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not authorized - không phải owner
+        '404':
+          description: Reminder not found
+        '500':
+          description: Lỗi server
+
+    delete:
+      tags:
+        - Reminders
+      summary: Xóa reminder
+      description: Xóa một reminder - chỉ owner mới có thể xóa
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: reminderId
+          required: true
+          schema:
+            type: string
+          description: Reminder ObjectId
+      responses:
+        '200':
+          description: Reminder được xóa thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Reminder deleted successfully"
+        '401':
+          description: Unauthorized
+        '403':
+          description: Not authorized - không phải owner
+        '404':
+          description: Reminder not found
+        '500':
+          description: Lỗi server
+
+  # ==================== SAVED EVENTS ====================
+  /saved-events:
+    get:
+      tags:
+        - Saved Events
+      summary: Lấy tất cả events đã save
+      description: Lấy danh sách tất cả events mà user đã save từ tất cả các folders
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Danh sách saved events
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        folder:
+                          type: string
+                          example: "Watch later"
+                        event:
+                          $ref: '#/components/schemas/Event'
+                        savedAt:
+                          type: string
+                          format: date-time
+        '401':
+          description: Unauthorized
+        '500':
+          description: Lỗi server
+
+    post:
+      tags:
+        - Saved Events
+      summary: Save event vào folder
+      description: |
+        Lưu một event vào folder của user.
+        - Nếu không chỉ định folder, mặc định là "Watch later"
+        - Tự động tạo folder mới nếu chưa tồn tại
+        - Không thể save trùng event trong cùng 1 folder
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - eventId
+              properties:
+                eventId:
+                  type: string
+                  example: "507f1f77bcf86cd799439011"
+                folderName:
+                  type: string
+                  example: "Watch later"
+                  default: "Watch later"
+      responses:
+        '201':
+          description: Event được save thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Event saved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Folder'
+        '400':
+          description: |
+            - Event ID is required
+            - Event is already saved in this folder
+        '401':
+          description: Unauthorized
+        '404':
+          description: Event not found
+        '500':
+          description: Lỗi server
+
+  /saved-events/{eventId}:
+    put:
+      tags:
+        - Saved Events
+      summary: Di chuyển event sang folder khác
+      description: |
+        Di chuyển một saved event từ folder hiện tại sang folder mới.
+        - Tự động tạo folder mới nếu chưa tồn tại
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: string
+          description: Event ObjectId
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - newFolder
+              properties:
+                newFolder:
+                  type: string
+                  example: "Music Events"
+      responses:
+        '200':
+          description: Event được di chuyển thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Event moved successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Folder'
+        '400':
+          description: New folder name required
+        '401':
+          description: Unauthorized
+        '404':
+          description: Event not found in any folder
+        '500':
+          description: Lỗi server
+
+    delete:
+      tags:
+        - Saved Events
+      summary: Xóa saved event
+      description: Xóa một event khỏi tất cả các folders của user
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: eventId
+          required: true
+          schema:
+            type: string
+          description: Event ObjectId
+      responses:
+        '200':
+          description: Event được xóa thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Event removed from saved list"
+        '401':
+          description: Unauthorized
+        '404':
+          description: Event not found in any folder
+        '500':
+          description: Lỗi server
+
+  /saved-events/get-folders:
+    get:
+      tags:
+        - Saved Events
+      summary: Lấy danh sách tên các folders
+      description: Lấy danh sách tên tất cả các folders của user
+      security:
+        - BearerAuth: []
+      responses:
+        '200':
+          description: Danh sách folder names
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: string
+                    example: ["Watch later", "Music Events", "Tech Conferences"]
+        '401':
+          description: Unauthorized
+        '500':
+          description: Lỗi server
+
+  /saved-events/post-folders:
+    post:
+      tags:
+        - Saved Events
+      summary: Tạo folder mới
+      description: Tạo một folder mới (rỗng) cho user
+      security:
+        - BearerAuth: []
+      requestBody:
+        required: true
+        content:
+          application/json:
+            schema:
+              type: object
+              required:
+                - folderName
+              properties:
+                folderName:
+                  type: string
+                  example: "Music Events"
+      responses:
+        '201':
+          description: Folder được tạo thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Folder created successfully"
+                  data:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/Folder'
+        '400':
+          description: |
+            - Folder name is required
+            - Folder already exists
+        '401':
+          description: Unauthorized
+        '500':
+          description: Lỗi server
+
+  /saved-events/folder/{folderName}:
+    get:
+      tags:
+        - Saved Events
+      summary: Lấy events theo folder
+      description: Lấy tất cả events trong một folder cụ thể
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: folderName
+          required: true
+          schema:
+            type: string
+          description: Tên folder
+          example: "Watch later"
+      responses:
+        '200':
+          description: Danh sách events trong folder
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  data:
+                    type: array
+                    items:
+                      type: object
+                      properties:
+                        event:
+                          $ref: '#/components/schemas/Event'
+                        savedAt:
+                          type: string
+                          format: date-time
+        '401':
+          description: Unauthorized
+        '404':
+          description: Folder not found
+        '500':
+          description: Lỗi server
+
+  # ==================== USERS ====================
+  /users/getAllUser:
+    get:
+      tags:
+        - Users
+      summary: Lấy danh sách tất cả users (Admin)
+      description: |
+        Lấy danh sách users với pagination và search.
+        **Public endpoint** nhưng nên có middleware kiểm tra admin
+      parameters:
+        - in: query
+          name: page
+          schema:
+            type: integer
+            default: 1
+          description: Số trang
+        - in: query
+          name: search
+          schema:
+            type: string
+          description: Tìm kiếm theo name hoặc email
+      responses:
+        '200':
+          description: Danh sách users
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  users:
+                    type: array
+                    items:
+                      $ref: '#/components/schemas/User'
+                  totalUsers:
+                    type: integer
+                    example: 45
+                  totalPages:
+                    type: integer
+                    example: 5
+                  currentPage:
+                    type: integer
+                    example: 1
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                $ref: '#/components/schemas/Error'
+
+  /users/updateRoleUser/{id}:
+    put:
+      tags:
+        - Users
+      summary: Swap role với user khác (Admin)
+      description: |
+        Đổi role giữa current user và target user.
+        - Cần authentication
+        - Sau khi swap, current user sẽ bị logout
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Target user ObjectId
+      responses:
+        '200':
+          description: Roles swapped successfully
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Roles swapped successfully"
+                  currentUserNewRole:
+                    type: string
+                    example: "user"
+                  targetUserNewRole:
+                    type: string
+                    example: "admin"
+                  logout:
+                    type: boolean
+                    example: true
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        '500':
+          description: Server error
+
+  # ==================== USER PROFILE ====================
+  /users/{userID}/profile:
+    get:
+      tags:
+        - User Profile
+      summary: Lấy thông tin profile của user
+      description: Lấy thông tin name, email, role của user
+      security:
+        - BearerAuth: []
+      parameters:
+        - in: path
+          name: userID
+          required: true
+          schema:
+            type: string
+          description: User ObjectId
+      responses:
+        '200':
+          description: Thông tin profile
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  name:
+                    type: string
+                    example: "Nguyễn Văn A"
+                  email:
+                    type: string
+                    example: "user@example.com"
+                  role:
+                    type: string
+                    example: "user"
+        '401':
+          description: Unauthorized
+        '404':
+          description: User not found
+        '500':
+          description: Server error
+
+  # ==================== CATEGORIES ====================
+  /categories/{id}:
+    delete:
+      tags:
+        - Categories
+      summary: Xóa category (Admin)
+      description: |
+        Xóa một category và tất cả events liên quan.
+        - Middleware trong model sẽ tự động xóa các events thuộc category này
+      parameters:
+        - in: path
+          name: id
+          required: true
+          schema:
+            type: string
+          description: Category ObjectId
+      responses:
+        '200':
+          description: Category và related events được xóa thành công
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Category and related events deleted"
+        '404':
+          description: Category not found
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  message:
+                    type: string
+                    example: "Category not found"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  error:
+                    type: string
+
+  # ==================== CRON JOBS ====================
+  /cron/check-reminders:
+    get:
+      tags:
+        - Cron Jobs
+      summary: Check và gửi reminders (External Cron Service)
+      description: |
+        Endpoint được gọi bởi external cron service để check và gửi email reminders.
+        
+        **Bảo mật:**
+        - Yêu cầu secret key trong header `x-cron-secret` hoặc query param `secret`
+        - Secret phải khớp với `process.env.CRON_SECRET`
+        
+        **Logic:**
+        - Tìm các reminders chưa gửi (isSent=false)
+        - Trong khoảng thời gian từ 2 phút trước đến hiện tại
+        - Gửi email cho từng reminder
+        - Đánh dấu isSent=true sau khi gửi thành công
+      parameters:
+        - in: query
+          name: secret
+          schema:
+            type: string
+          description: Cron secret key (alternative to header)
+        - in: header
+          name: x-cron-secret
+          schema:
+            type: string
+          description: Cron secret key
+      responses:
+        '200':
+          description: Check reminders hoàn tất
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: true
+                  message:
+                    type: string
+                    example: "Cron job completed"
+                  stats:
+                    type: object
+                    properties:
+                      total:
+                        type: integer
+                        example: 5
+                      sent:
+                        type: integer
+                        example: 4
+                      failed:
+                        type: integer
+                        example: 1
+                      timestamp:
+                        type: string
+                        format: date-time
+        '401':
+          description: Unauthorized - sai hoặc thiếu secret key
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Unauthorized"
+                  debug:
+                    type: object
+                    properties:
+                      receivedSecret:
+                        type: string
+                        example: "provided"
+                      expectedSecret:
+                        type: string
+                        example: "configured"
+        '500':
+          description: Server error
+          content:
+            application/json:
+              schema:
+                type: object
+                properties:
+                  success:
+                    type: boolean
+                    example: false
+                  message:
+                    type: string
+                    example: "Error processing reminders"
+                  error:
+                    type: string
